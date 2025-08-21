@@ -1,0 +1,58 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 I\'92m building a workout planner UI component. Please help me code a React component (or a set of components) that allows users to create a **Workout Rotation**. Here's the desired functionality:\
+\
+---\
+\
+### \uc0\u9999 \u65039  Input Fields\
+\
+1. **Number of Workout Days in the Rotation** (e.g., 3, 5, etc.)\
+2. **Number of Cycles** (i.e., how many times the full rotation repeats)\
+3. Optional: **Start Date** (could be used to render a calendar preview later)\
+\
+---\
+\
+### \uc0\u55357 \u56550  Behavior / UI\
+\
+- Based on the selected number of days in the rotation, generate visual "workout blocks" using **rounded-edge squares** (like pills or cards).\
+  - For example, if the user selects \'935 days in the rotation\'94, create 5 visual blocks labeled `Workout 1`, `Workout 2`, ..., `Workout 5`.\
+  - These blocks should be customizable:\
+    - Click to edit workout name (e.g., \'93Push\'94, \'93Legs\'94, \'93Pull\'94)\
+    - Click to add/edit exercises per workout\
+  - Each workout block shows a summary (number of exercises inside).\
+\
+- Allow **drag-and-drop reordering** of workouts in the rotation.\
+  - If I drag "Workout 3" to the first spot, it becomes "Workout 1", and others shift accordingly.\
+\
+- Users should be able to insert **rest days** into the rotation.\
+  - For example, between Workout 2 and 3, I might want a rest day.\
+  - Rest days should appear visually similar (maybe grayed out), also reorderable.\
+\
+- After setting the number of workouts and cycles, show a **preview** of the full plan over time.\
+  - For example, if I have 5 days in a rotation and I select 4 cycles, I should see 20 blocks arranged sequentially: Workout 1, 2, 3, 4, 5, 1, 2, 3... etc.\
+  - This could be a scrollable grid or list.\
+\
+---\
+\
+### \uc0\u55357 \u57056 \u65039  Optional Features\
+\
+- Each workout block should let the user:\
+  - Add exercises\
+  - Edit exercise names, sets, reps, notes\
+- Optionally store the workout plan in localStorage or a temporary object (no backend needed now)\
+- Could use a library like [react-beautiful-dnd](https://github.com/atlassian/react-beautiful-dnd) for drag-and-drop functionality\
+\
+---\
+\
+### \uc0\u55357 \u56513  Suggested Component Structure (feel free to adapt)\
+\
+- `WorkoutRotationPlanner`\
+- `WorkoutDayCard` (customizable block for each day)\
+- `RotationPreviewGrid` (renders the total workout schedule visually)\
+- `RestDayCard` (rendered like other cards but labeled \'93Rest\'94)\
+}
