@@ -217,10 +217,11 @@ const WorkoutApp = () => {
       <input
         ref={inputRef}
         type="text"
+        inputMode="numeric"
         defaultValue={initialValue || ''}
         onChange={handleChange}
         placeholder={placeholder}
-        className="w-16 px-2 py-1.5 bg-white border-0 rounded-lg text-sm text-center font-medium text-gray-900 focus:ring-1 focus:ring-blue-500 shadow-sm"
+        className="w-16 sm:w-20 px-2 py-2 sm:py-1.5 bg-white border-0 rounded-lg text-sm text-center font-medium text-gray-900 focus:ring-2 focus:ring-blue-500 shadow-sm min-h-[44px] sm:min-h-[36px]"
       />
     );
   });
@@ -985,31 +986,36 @@ const WorkoutApp = () => {
   };
 
   const RoutineBuilderView = () => (
-    <div className="flex-1 overflow-y-auto pb-24 bg-gray-50">
-      <div className="p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Routine Builder</h2>
+    <div className="flex-1 overflow-y-auto pb-20 sm:pb-24 bg-gray-50">
+      <div className="px-4 sm:px-6 py-4 sm:py-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Routine Builder</h2>
         
         {/* Select Workouts */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4 sm:mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Workouts</h3>
-          <div className="space-y-2">
+          <div className="space-y-2 sm:space-y-3">
             {createdWorkouts.map(workout => (
-              <div key={workout.id} className={`flex items-center justify-between p-3 rounded-lg ${
+              <div key={workout.id} className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-lg gap-3 ${
                 selectedWorkouts.includes(workout.id) ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
               }`}>
-                <span className="font-medium text-gray-900">{workout.name}</span>
-                <div className="flex items-center space-x-2">
+                <div className="flex-1">
+                  <span className="font-medium text-gray-900 block">{workout.name}</span>
+                  {workout.exercises && workout.exercises.length > 0 && (
+                    <span className="text-xs text-gray-500 mt-1 block">({workout.exercises.length} exercises)</span>
+                  )}
+                </div>
+                <div className="flex items-center space-x-2 w-full sm:w-auto">
                   {selectedWorkouts.includes(workout.id) ? (
                     <button
                       onClick={() => removeWorkoutFromRoutine(workout.id)}
-                      className="px-3 py-1 bg-red-500 text-white text-xs rounded-lg hover:bg-red-600"
+                      className="w-full sm:w-auto px-3 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 active:bg-red-700 min-h-[44px] sm:min-h-[32px]"
                     >
                       Remove from Routine
                     </button>
                   ) : (
                     <button
                       onClick={() => addWorkoutToRoutine(workout.id)}
-                      className="px-3 py-1 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600"
+                      className="w-full sm:w-auto px-3 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 active:bg-blue-700 min-h-[44px] sm:min-h-[32px]"
                     >
                       Add to Routine
                     </button>
@@ -1020,7 +1026,7 @@ const WorkoutApp = () => {
             
             <button
               onClick={addNewWorkoutAndSwitch}
-              className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors"
+              className="w-full p-3 sm:p-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-400 hover:text-blue-600 active:border-blue-500 transition-colors min-h-[44px]"
             >
               {createdWorkouts.length === 0 ? "+ Create Your First Workout" : "+ Add New Workout"}
             </button>
@@ -1028,7 +1034,7 @@ const WorkoutApp = () => {
         </div>
 
         {/* Select Cycles */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4 sm:mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Cycles</h3>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1053,7 +1059,7 @@ const WorkoutApp = () => {
                   alert('Failed to update rotation cycles. Please try again.');
                 }
               }}
-              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-3 sm:py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px] text-base"
             >
               {[1,2,3,4,5,6,8,10,12].map(num => (
                 <option key={num} value={num}>{num} cycle{num > 1 ? 's' : ''}</option>
@@ -1412,17 +1418,18 @@ const WorkoutApp = () => {
 
   const WorkoutBuilderView = () => {
     return (
-      <div className="flex-1 flex flex-col bg-gray-50">
+      <div className="flex-1 flex flex-col bg-gray-50 pb-20 sm:pb-24">
         {/* Workout Repository */}
-        <div className="bg-white px-6 py-4 border-b border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Workout Builder</h2>
+        <div className="bg-white px-4 sm:px-6 py-4 border-b border-gray-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Workout Builder</h2>
             {!isCreatingWorkout && (
               <button
                 onClick={addWorkout}
-                className="px-4 py-2 bg-blue-500 text-white rounded-xl text-sm font-medium hover:bg-blue-600 transition-colors shadow-md"
+                className="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-blue-500 text-white rounded-xl text-sm font-medium hover:bg-blue-600 transition-colors shadow-md min-h-[44px] flex items-center justify-center"
               >
-                + Create New Workout
+                <Plus className="w-4 h-4 mr-2" />
+                Create New Workout
               </button>
             )}
           </div>
@@ -1430,26 +1437,26 @@ const WorkoutApp = () => {
           {/* Created Workouts */}
           {createdWorkouts.length > 0 && (
             <div className="mb-4">
-              <div className="flex space-x-2 overflow-x-auto pb-2 pt-2 pr-2">
+              <div className="flex space-x-3 overflow-x-auto pb-2 pt-2 pr-2 -mx-4 px-4 sm:mx-0 sm:px-0">
                 {createdWorkouts.map(workout => (
-                  <div key={workout.id} className="relative flex items-center space-x-1">
+                  <div key={workout.id} className="relative flex items-center space-x-1 flex-shrink-0">
                     <button
                       onClick={() => selectWorkout(workout)}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+                      className={`px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all min-h-[44px] ${
                         currentWorkout?.id === workout.id
                           ? 'bg-blue-500 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300'
                       }`}
                     >
-                      {workout.name}
+                      <span className="block">{workout.name}</span>
                       {workout.exercises && workout.exercises.length > 0 && (
-                        <span className="ml-2 text-xs opacity-75">({workout.exercises.length})</span>
+                        <span className="text-xs opacity-75 block">({workout.exercises.length} exercises)</span>
                       )}
                     </button>
                     {currentWorkout?.id === workout.id && (
                       <button
                         onClick={() => confirmDeleteWorkout(workout.id)}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors text-xs z-10"
+                        className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 active:bg-red-700 transition-colors text-sm z-10 shadow-md"
                         title="Delete workout"
                       >
                         ×
@@ -1559,12 +1566,12 @@ const WorkoutApp = () => {
               </div>
             </div>
           ) : (
-            <div className="p-6 space-y-4">
+            <div className="px-4 sm:px-6 py-4 sm:py-6 space-y-4">
               <button
                 onClick={() => setShowExerciseLibrary(true)}
-                className="w-full bg-blue-500 text-white px-4 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:bg-blue-600 transition-colors shadow-lg"
+                className="w-full bg-blue-500 text-white px-4 py-3 sm:py-2.5 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:bg-blue-600 active:bg-blue-700 transition-colors shadow-lg min-h-[48px]"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-5 h-5 sm:w-4 sm:h-4" />
                 <span>Add Exercise</span>
               </button>
               {currentWorkout.exercises?.map((exercise, exerciseIndex) => {
@@ -1572,18 +1579,12 @@ const WorkoutApp = () => {
                 
                 return (
                   <div key={exercise.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="flex items-center justify-between p-5">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-1 text-gray-400">
+                    <div className="flex items-start sm:items-center justify-between p-4 sm:p-5 gap-3">
+                      <div className="flex items-start space-x-3 flex-1 min-w-0">
+                        <div className="p-1 text-gray-400 flex-shrink-0">
                           <GripVertical className="w-4 h-4" />
                         </div>
-                        <button
-                          onClick={() => toggleExerciseCollapse(exercise.id)}
-                          className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${!isCollapsed ? 'rotate-180' : ''}`} />
-                        </button>
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap gap-1 mb-2">
                             {exercise.muscleGroups?.map((muscle, index) => (
                               <span 
@@ -1604,82 +1605,92 @@ const WorkoutApp = () => {
                                 if (e.key === 'Enter') setEditingExerciseName(null);
                                 if (e.key === 'Escape') setEditingExerciseName(null);
                               }}
-                              className="text-lg font-semibold text-gray-900 bg-white border border-blue-500 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="text-lg sm:text-xl font-semibold text-gray-900 bg-white border border-blue-500 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
                               autoFocus
                             />
                           ) : (
                             <h3 
-                              className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                              className="text-lg sm:text-xl font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors leading-tight"
                               onClick={() => setEditingExerciseName(exercise.id)}
                             >
                               {exercise.name}
                             </h3>
                           )}
-                          {isCollapsed && (
-                            <div className="text-sm text-gray-600 mt-1">
-                              <div className="font-medium mb-1">
-                                {exercise.sets} set{exercise.sets !== 1 ? 's' : ''}
-                              </div>
-                              {exercise.setResults && exercise.setResults.length > 0 && (
-                                <div className="space-y-0.5">
-                                  {exercise.setResults.map((set, setIndex) => (
-                                    <div key={setIndex} className="text-xs text-gray-500">
-                                      {set.weight || '0'} lb × {set.reps || '0'} reps
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
                         </div>
                       </div>
-                      <button
-                        onClick={() => removeExercise(exerciseIndex)}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center space-x-2 flex-shrink-0">
+                        <button
+                          onClick={() => toggleExerciseCollapse(exercise.id)}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        >
+                          <ChevronDown className={`w-5 h-5 sm:w-4 sm:h-4 text-gray-400 transition-transform ${!isCollapsed ? 'rotate-180' : ''}`} />
+                        </button>
+                        <button
+                          onClick={() => removeExercise(exerciseIndex)}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        >
+                          <Trash2 className="w-5 h-5 sm:w-4 sm:h-4" />
+                        </button>
+                      </div>
+                      {isCollapsed && (
+                        <div className="px-4 sm:px-5 pb-4">
+                          <div className="text-sm text-gray-600 pl-8">
+                            <div className="font-medium mb-1">
+                              {exercise.sets} set{exercise.sets !== 1 ? 's' : ''}
+                            </div>
+                            {exercise.setResults && exercise.setResults.length > 0 && (
+                              <div className="space-y-0.5">
+                                {exercise.setResults.map((set, setIndex) => (
+                                  <div key={setIndex} className="text-xs text-gray-500">
+                                    {set.weight || '0'} lb × {set.reps || '0'} reps
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {!isCollapsed && (
-                      <div className="px-5 pb-5 border-t border-gray-50">
+                      <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-gray-50">
                         <div className="py-4 border-b border-gray-100">
                           <h4 className="text-sm font-medium text-gray-700 mb-4 underline">Target</h4>
                           
                           <div className="mb-4">
                             <div className="flex items-center justify-between">
                               <span className="text-sm font-medium text-gray-700">Sets</span>
-                              <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-3 sm:space-x-4">
                                 <button
                                   onClick={() => updateExerciseSets(exerciseIndex, -1)}
-                                  className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+                                  className="w-10 h-10 sm:w-8 sm:h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors"
                                 >
-                                  <Minus className="w-4 h-4 text-gray-600" />
+                                  <Minus className="w-5 h-5 sm:w-4 sm:h-4 text-gray-600" />
                                 </button>
-                                <span className="text-xl font-semibold text-gray-900 min-w-[2rem] text-center">{exercise.sets}</span>
+                                <span className="text-xl sm:text-2xl font-semibold text-gray-900 min-w-[3rem] sm:min-w-[2rem] text-center">{exercise.sets}</span>
                                 <button
                                   onClick={() => updateExerciseSets(exerciseIndex, 1)}
-                                  className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+                                  className="w-10 h-10 sm:w-8 sm:h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors"
                                 >
-                                  <Plus className="w-4 h-4 text-gray-600" />
+                                  <Plus className="w-5 h-5 sm:w-4 sm:h-4 text-gray-600" />
                                 </button>
                               </div>
                             </div>
                           </div>
                         </div>
 
-                        <div className="space-y-3 px-4 pt-4">
+                        <div className="space-y-3 sm:space-y-4 px-2 sm:px-4 pt-4">
                           {Array.from({ length: exercise.sets }, (_, setIndex) => {
                             const setResult = exercise.setResults?.[setIndex] || { weight: '', reps: '' };
                             
                             return (
-                              <div key={setIndex} className="p-3 bg-gray-50 rounded-xl relative">
-                                <div className="absolute -top-2 -left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold border-2 border-white shadow-sm z-10">
+                              <div key={setIndex} className="p-3 sm:p-4 bg-gray-50 rounded-xl relative">
+                                <div className="absolute -top-2 -left-2 w-7 h-7 sm:w-6 sm:h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold border-2 border-white shadow-sm z-10">
                                   {setIndex + 1}
                                 </div>
-                                <div className="flex items-center justify-between pl-4">
-                                  <div className="flex flex-col items-center">
-                                    <span className="text-xs text-gray-500 mb-1 font-medium">Weight</span>
+                                <div className="flex items-center justify-between pl-5 sm:pl-4 gap-3 sm:gap-4">
+                                  <div className="flex flex-col items-center flex-1">
+                                    <span className="text-xs text-gray-500 mb-2 sm:mb-1 font-medium">Weight</span>
                                     <SetInput
                                       key={`${exercise.id}-${setIndex}-weight`}
                                       exerciseIndex={exerciseIndex}
@@ -1691,10 +1702,10 @@ const WorkoutApp = () => {
                                     />
                                   </div>
                                   
-                                  <span className="text-lg text-gray-400">×</span>
+                                  <span className="text-lg sm:text-xl text-gray-400 flex-shrink-0">×</span>
                                   
-                                  <div className="flex flex-col items-center">
-                                    <span className="text-xs text-gray-500 mb-1 font-medium">Reps</span>
+                                  <div className="flex flex-col items-center flex-1">
+                                    <span className="text-xs text-gray-500 mb-2 sm:mb-1 font-medium">Reps</span>
                                     <SetInput
                                       key={`${exercise.id}-${setIndex}-reps`}
                                       exerciseIndex={exerciseIndex}
@@ -1801,13 +1812,13 @@ const WorkoutApp = () => {
   }
 
   return (
-    <div className="max-w-md mx-auto bg-gray-50 min-h-screen flex flex-col">
-      <div className="bg-white border-b border-gray-100 p-6 shadow-sm">
+    <div className="w-full max-w-none sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-6xl mx-auto bg-gray-50 min-h-screen flex flex-col">
+      <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-4 shadow-sm">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Workout Tracker</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Workout Tracker</h1>
           <button
             onClick={() => supabase.auth.signOut()}
-            className="text-sm text-gray-500 hover:text-gray-700"
+            className="text-sm text-gray-500 hover:text-gray-700 px-2 py-1 rounded-md hover:bg-gray-100 transition-colors"
           >
             Sign Out
           </button>
@@ -1818,40 +1829,40 @@ const WorkoutApp = () => {
       {currentTab === 'routine' && <RoutineBuilderView />}
       {currentTab === 'weekly' && <WeeklySummaryView />}
 
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white/95 backdrop-blur-md border-t border-gray-200 flex">
+      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 flex safe-area-inset-bottom">
         <button
           onClick={() => setCurrentTab('workout')}
-          className={`flex-1 py-3 flex flex-col items-center space-y-1 transition-colors ${
-            currentTab === 'workout' ? 'text-blue-500' : 'text-gray-400'
+          className={`flex-1 py-3 sm:py-4 flex flex-col items-center space-y-1 transition-colors min-h-[3.5rem] sm:min-h-[4rem] ${
+            currentTab === 'workout' ? 'text-blue-500 bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
           }`}
         >
-          <Target className="w-4 h-4" />
-          <span className="text-xs font-medium">Workout Builder</span>
+          <Target className="w-5 h-5 sm:w-6 sm:h-6" />
+          <span className="text-xs sm:text-sm font-medium leading-tight">Workout</span>
         </button>
         <button
           onClick={() => setCurrentTab('routine')}
-          className={`flex-1 py-3 flex flex-col items-center space-y-1 transition-colors ${
-            currentTab === 'routine' ? 'text-blue-500' : 'text-gray-400'
+          className={`flex-1 py-3 sm:py-4 flex flex-col items-center space-y-1 transition-colors min-h-[3.5rem] sm:min-h-[4rem] ${
+            currentTab === 'routine' ? 'text-blue-500 bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
           }`}
         >
-          <RotateCcw className="w-4 h-4" />
-          <span className="text-xs font-medium">Routine Builder</span>
+          <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
+          <span className="text-xs sm:text-sm font-medium leading-tight">Routine</span>
         </button>
         <button
           onClick={() => setCurrentTab('weekly')}
-          className={`flex-1 py-3 flex flex-col items-center space-y-1 transition-colors ${
-            currentTab === 'weekly' ? 'text-blue-500' : 'text-gray-400'
+          className={`flex-1 py-3 sm:py-4 flex flex-col items-center space-y-1 transition-colors min-h-[3.5rem] sm:min-h-[4rem] ${
+            currentTab === 'weekly' ? 'text-blue-500 bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
           }`}
         >
-          <BarChart3 className="w-4 h-4" />
-          <span className="text-xs font-medium">Summary</span>
+          <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6" />
+          <span className="text-xs sm:text-sm font-medium leading-tight">Summary</span>
         </button>
       </div>
 
       {showExerciseLibrary && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end">
-          <div className="bg-white w-full h-4/5 rounded-t-3xl flex flex-col shadow-2xl">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center sm:justify-center">
+          <div className="bg-white w-full h-[85vh] sm:h-[80vh] sm:w-11/12 sm:max-w-4xl sm:rounded-2xl rounded-t-3xl sm:rounded-t-2xl flex flex-col shadow-2xl sm:max-h-[600px]">
+            <div className="px-4 sm:px-6 py-4 sm:py-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
               <h2 className="text-xl font-bold text-gray-900">
                 {libraryMode === 'exercises' ? 'Exercise Library' : 'Copy from Other Workouts'}
               </h2>
@@ -1862,30 +1873,30 @@ const WorkoutApp = () => {
                   setSelectedExercises([]);
                   setSelectedCopyExercises([]);
                 }}
-                className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                className="w-10 h-10 sm:w-8 sm:h-8 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-full flex items-center justify-center transition-colors"
               >
-                <X className="w-4 h-4 text-gray-600" />
+                <X className="w-5 h-5 sm:w-4 sm:h-4 text-gray-600" />
               </button>
             </div>
 
-            <div className="p-4 border-b border-gray-100">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex-shrink-0">
               <div className="flex space-x-2 mb-3">
                 <button
                   onClick={() => setLibraryMode('exercises')}
-                  className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-all ${
+                  className={`flex-1 py-3 sm:py-2 px-4 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
                     libraryMode === 'exercises'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-blue-500 text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300'
                   }`}
                 >
                   Add New Exercises
                 </button>
                 <button
                   onClick={() => setLibraryMode('copy')}
-                  className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-all ${
+                  className={`flex-1 py-3 sm:py-2 px-4 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
                     libraryMode === 'copy'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-green-500 text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300'
                   }`}
                 >
                   Copy from Other Workouts
