@@ -36,6 +36,7 @@ const WorkoutApp = () => {
     }
   }, [user])
 
+
   // Cleanup effect for debounce timeouts
   useEffect(() => {
     return () => {
@@ -190,6 +191,39 @@ const WorkoutApp = () => {
 
   // Debounce ref for set value updates
   const debounceTimeouts = useRef({});
+
+  // Custom component for uncontrolled set inputs to prevent focus loss
+  const SetInput = React.memo(({ exerciseIndex, setIndex, field, initialValue, placeholder, onValueChange, stableKey }) => {
+    const inputRef = useRef(null);
+    const lastSavedValue = useRef(initialValue);
+    
+    const handleChange = (e) => {
+      const value = e.target.value;
+      // Don't trigger re-renders during typing - just save the data
+      onValueChange(exerciseIndex, setIndex, field, value);
+    };
+    
+    // Only update the input if the value changed from outside (not from typing)
+    useEffect(() => {
+      if (inputRef.current && 
+          inputRef.current !== document.activeElement && 
+          initialValue !== lastSavedValue.current) {
+        inputRef.current.value = initialValue || '';
+        lastSavedValue.current = initialValue;
+      }
+    }, [initialValue]);
+    
+    return (
+      <input
+        ref={inputRef}
+        type="text"
+        defaultValue={initialValue || ''}
+        onChange={handleChange}
+        placeholder={placeholder}
+        className="w-16 px-2 py-1.5 bg-white border-0 rounded-lg text-sm text-center font-medium text-gray-900 focus:ring-1 focus:ring-blue-500 shadow-sm"
+      />
+    );
+  });
 
   const filteredExercises = exerciseLibrary.filter(exercise => {
     return exercise.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -618,32 +652,32 @@ const WorkoutApp = () => {
     }
   };
 
+  // Store exercise data in a ref to avoid triggering re-renders during typing
+  const exerciseDataRef = useRef({});
+
   const updateSetValue = useCallback((exerciseIndex, setIndex, field, value) => {
     if (!currentWorkout?.exercises[exerciseIndex]) return;
     
     const exercise = currentWorkout.exercises[exerciseIndex];
-    const updatedSetResults = [...exercise.setResults];
+    const exerciseKey = `${exercise.id}`;
     
-    if (!updatedSetResults[setIndex]) {
-      updatedSetResults[setIndex] = { weight: '', reps: '' };
+    // Update our local ref immediately (no re-render)
+    if (!exerciseDataRef.current[exerciseKey]) {
+      exerciseDataRef.current[exerciseKey] = { ...exercise };
     }
     
-    updatedSetResults[setIndex][field] = value;
+    const localExercise = exerciseDataRef.current[exerciseKey];
+    if (!localExercise.setResults) {
+      localExercise.setResults = [...exercise.setResults];
+    }
     
-    // Update local state immediately for responsive UI
-    const updatedExercise = { ...exercise, setResults: updatedSetResults };
-    const updatedExercises = [...currentWorkout.exercises];
-    updatedExercises[exerciseIndex] = updatedExercise;
+    if (!localExercise.setResults[setIndex]) {
+      localExercise.setResults[setIndex] = { weight: '', reps: '' };
+    }
     
-    const updatedWorkouts = createdWorkouts.map(workout => 
-      workout.id === currentWorkout.id 
-        ? { ...workout, exercises: updatedExercises }
-        : workout
-    );
-    setCreatedWorkouts(updatedWorkouts);
-    setCurrentWorkout({ ...currentWorkout, exercises: updatedExercises });
+    localExercise.setResults[setIndex][field] = value;
     
-    // Debounce the database save
+    // Debounce both the state update AND database save
     const debounceKey = `${exercise.id}-${setIndex}-${field}`;
     
     if (debounceTimeouts.current[debounceKey]) {
@@ -652,15 +686,42 @@ const WorkoutApp = () => {
     
     debounceTimeouts.current[debounceKey] = setTimeout(async () => {
       try {
+        // Update the database
         await workoutService.updateExercise(exercise.id, {
-          set_results: updatedSetResults
+          set_results: localExercise.setResults
         });
+        
+        // Update React state (this will cause a re-render, but only after typing stops)
+        setCreatedWorkouts(prevWorkouts => {
+          return prevWorkouts.map(workout => {
+            if (workout.id === currentWorkout.id) {
+              const newExercises = [...workout.exercises];
+              newExercises[exerciseIndex] = { 
+                ...newExercises[exerciseIndex], 
+                setResults: [...localExercise.setResults]
+              };
+              return { ...workout, exercises: newExercises };
+            }
+            return workout;
+          });
+        });
+        
+        setCurrentWorkout(prevWorkout => {
+          if (!prevWorkout) return prevWorkout;
+          const newExercises = [...prevWorkout.exercises];
+          newExercises[exerciseIndex] = { 
+            ...newExercises[exerciseIndex], 
+            setResults: [...localExercise.setResults]
+          };
+          return { ...prevWorkout, exercises: newExercises };
+        });
+        
       } catch (error) {
         console.error('Error updating set value:', error);
       }
       delete debounceTimeouts.current[debounceKey];
-    }, 1000); // Save after 1 second of no typing
-  }, [currentWorkout, createdWorkouts]);
+    }, 1000); // Wait 1 second after typing stops
+  }, [currentWorkout]);
 
   const updateExerciseName = async (exerciseIndex, newName) => {
     if (!currentWorkout?.exercises[exerciseIndex]) return;
@@ -1619,12 +1680,14 @@ const WorkoutApp = () => {
                                 <div className="flex items-center justify-between pl-4">
                                   <div className="flex flex-col items-center">
                                     <span className="text-xs text-gray-500 mb-1 font-medium">Weight</span>
-                                    <input
-                                      type="text"
-                                      value={setResult.weight || ''}
-                                      onChange={(e) => updateSetValue(exerciseIndex, setIndex, 'weight', e.target.value)}
+                                    <SetInput
+                                      key={`${exercise.id}-${setIndex}-weight`}
+                                      exerciseIndex={exerciseIndex}
+                                      setIndex={setIndex}
+                                      field="weight"
+                                      initialValue={setResult.weight}
                                       placeholder="lbs"
-                                      className="w-16 px-2 py-1.5 bg-white border-0 rounded-lg text-sm text-center font-medium text-gray-900 focus:ring-1 focus:ring-blue-500 shadow-sm"
+                                      onValueChange={updateSetValue}
                                     />
                                   </div>
                                   
@@ -1632,12 +1695,14 @@ const WorkoutApp = () => {
                                   
                                   <div className="flex flex-col items-center">
                                     <span className="text-xs text-gray-500 mb-1 font-medium">Reps</span>
-                                    <input
-                                      type="text"
-                                      value={setResult.reps || ''}
-                                      onChange={(e) => updateSetValue(exerciseIndex, setIndex, 'reps', e.target.value)}
+                                    <SetInput
+                                      key={`${exercise.id}-${setIndex}-reps`}
+                                      exerciseIndex={exerciseIndex}
+                                      setIndex={setIndex}
+                                      field="reps"
+                                      initialValue={setResult.reps}
                                       placeholder="10"
-                                      className="w-16 px-2 py-1.5 bg-white border-0 rounded-lg text-sm text-center font-medium text-gray-900 focus:ring-1 focus:ring-blue-500 shadow-sm"
+                                      onValueChange={updateSetValue}
                                     />
                                   </div>
                                 </div>
