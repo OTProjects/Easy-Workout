@@ -1804,28 +1804,44 @@ const WorkoutApp = () => {
                 </button>
               </div>
               
-              {libraryMode === 'exercises' && selectedExercises.length > 0 && (
+              {libraryMode === 'exercises' && (
                 <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
                   <span className="text-sm font-medium text-blue-900">
-                    {selectedExercises.length} exercise{selectedExercises.length !== 1 ? 's' : ''} selected
+                    {selectedExercises.length > 0 
+                      ? `${selectedExercises.length} exercise${selectedExercises.length !== 1 ? 's' : ''} selected`
+                      : 'No exercises selected'
+                    }
                   </span>
                   <button
                     onClick={addMultipleExercises}
-                    className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                    disabled={selectedExercises.length === 0}
+                    className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
+                      selectedExercises.length > 0
+                        ? 'bg-blue-500 text-white hover:bg-blue-600'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
                   >
                     Add Selected
                   </button>
                 </div>
               )}
               
-              {libraryMode === 'copy' && selectedCopyExercises.length > 0 && (
+              {libraryMode === 'copy' && (
                 <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
                   <span className="text-sm font-medium text-green-900">
-                    {selectedCopyExercises.length} exercise{selectedCopyExercises.length !== 1 ? 's' : ''} selected
+                    {selectedCopyExercises.length > 0
+                      ? `${selectedCopyExercises.length} exercise${selectedCopyExercises.length !== 1 ? 's' : ''} selected`
+                      : 'No exercises selected'
+                    }
                   </span>
                   <button
                     onClick={addMultipleCopyExercises}
-                    className="px-4 py-2 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 transition-colors font-medium"
+                    disabled={selectedCopyExercises.length === 0}
+                    className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
+                      selectedCopyExercises.length > 0
+                        ? 'bg-green-500 text-white hover:bg-green-600'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
                   >
                     Copy Selected
                   </button>
