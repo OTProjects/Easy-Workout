@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Search, X, GripVertical, Trash2, ChevronDown, Target, Calendar, BarChart3, Dumbbell, Minus, RotateCcw, Edit2 } from 'lucide-react';
 import { supabase, hasValidCredentials } from './supabase';
 import { workoutService } from './services/workoutService';
@@ -35,6 +35,16 @@ const WorkoutApp = () => {
       loadRoutine()
     }
   }, [user])
+
+  // Cleanup effect for debounce timeouts
+  useEffect(() => {
+    return () => {
+      // Clear all pending timeouts on unmount
+      Object.values(debounceTimeouts.current).forEach(timeout => {
+        if (timeout) clearTimeout(timeout);
+      });
+    };
+  }, []);
 
   const loadWorkouts = async () => {
     try {
@@ -177,6 +187,9 @@ const WorkoutApp = () => {
   const [selectedExercises, setSelectedExercises] = useState([]);
   const [selectedCopyExercises, setSelectedCopyExercises] = useState([]);
   const [workoutToDelete, setWorkoutToDelete] = useState(null);
+
+  // Debounce ref for set value updates
+  const debounceTimeouts = useRef({});
 
   const filteredExercises = exerciseLibrary.filter(exercise => {
     return exercise.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -605,39 +618,49 @@ const WorkoutApp = () => {
     }
   };
 
-  const updateSetValue = async (exerciseIndex, setIndex, field, value) => {
+  const updateSetValue = useCallback((exerciseIndex, setIndex, field, value) => {
     if (!currentWorkout?.exercises[exerciseIndex]) return;
     
-    try {
-      const exercise = currentWorkout.exercises[exerciseIndex];
-      const updatedSetResults = [...exercise.setResults];
-      
-      if (!updatedSetResults[setIndex]) {
-        updatedSetResults[setIndex] = { weight: '', reps: '' };
-      }
-      
-      updatedSetResults[setIndex][field] = value;
-      
-      await workoutService.updateExercise(exercise.id, {
-        set_results: updatedSetResults
-      });
-      
-      const updatedExercise = { ...exercise, setResults: updatedSetResults };
-      const updatedExercises = [...currentWorkout.exercises];
-      updatedExercises[exerciseIndex] = updatedExercise;
-      
-      const updatedWorkouts = createdWorkouts.map(workout => 
-        workout.id === currentWorkout.id 
-          ? { ...workout, exercises: updatedExercises }
-          : workout
-      );
-      setCreatedWorkouts(updatedWorkouts);
-      setCurrentWorkout({ ...currentWorkout, exercises: updatedExercises });
-    } catch (error) {
-      console.error('Error updating set value:', error);
-      // Don't show alert for this as it would be too disruptive during typing
+    const exercise = currentWorkout.exercises[exerciseIndex];
+    const updatedSetResults = [...exercise.setResults];
+    
+    if (!updatedSetResults[setIndex]) {
+      updatedSetResults[setIndex] = { weight: '', reps: '' };
     }
-  };
+    
+    updatedSetResults[setIndex][field] = value;
+    
+    // Update local state immediately for responsive UI
+    const updatedExercise = { ...exercise, setResults: updatedSetResults };
+    const updatedExercises = [...currentWorkout.exercises];
+    updatedExercises[exerciseIndex] = updatedExercise;
+    
+    const updatedWorkouts = createdWorkouts.map(workout => 
+      workout.id === currentWorkout.id 
+        ? { ...workout, exercises: updatedExercises }
+        : workout
+    );
+    setCreatedWorkouts(updatedWorkouts);
+    setCurrentWorkout({ ...currentWorkout, exercises: updatedExercises });
+    
+    // Debounce the database save
+    const debounceKey = `${exercise.id}-${setIndex}-${field}`;
+    
+    if (debounceTimeouts.current[debounceKey]) {
+      clearTimeout(debounceTimeouts.current[debounceKey]);
+    }
+    
+    debounceTimeouts.current[debounceKey] = setTimeout(async () => {
+      try {
+        await workoutService.updateExercise(exercise.id, {
+          set_results: updatedSetResults
+        });
+      } catch (error) {
+        console.error('Error updating set value:', error);
+      }
+      delete debounceTimeouts.current[debounceKey];
+    }, 1000); // Save after 1 second of no typing
+  }, [currentWorkout, createdWorkouts]);
 
   const updateExerciseName = async (exerciseIndex, newName) => {
     if (!currentWorkout?.exercises[exerciseIndex]) return;
