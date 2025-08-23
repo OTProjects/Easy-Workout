@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, BarChart3, User, Settings, LogOut, Search, Menu, X } from 'lucide-react';
+import { Plus, Calendar, BarChart3, User, Settings, LogOut, Search, Menu, X, Play, Target } from 'lucide-react';
 import { supabase } from './supabase';
 import { workoutService } from './services/workoutService';
 import Auth from './components/Auth';
+import FullWorkoutWizard from './components/FullWorkoutWizard';
+import WorkoutExecution from './components/WorkoutExecution';
+import RoutinePlanner from './components/RoutinePlanner';
 import SimpleCard, { WorkoutCard } from './components/ui/SimpleCard';
 import SimpleButton, { FloatingActionButton, IconButton } from './components/ui/SimpleButton';
 import { SearchInput } from './components/ui/SimpleInput';
@@ -18,6 +21,8 @@ const SimpleWorkoutPlanner = () => {
   const [routineData, setRoutineData] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showWorkoutWizard, setShowWorkoutWizard] = useState(false);
+  const [executingWorkout, setExecutingWorkout] = useState(null);
   
   // Load data
   const [loadingWorkouts, setLoadingWorkouts] = useState(false);
@@ -144,6 +149,112 @@ const SimpleWorkoutPlanner = () => {
     return exercises.length > 0 ? 'strength' : 'mixed';
   };
 
+  const handleWorkoutWizardComplete = async (workoutData) => {
+    try {
+      // Create the workout
+      const newWorkout = await workoutService.createWorkout({
+        name: workoutData.name,
+        type: workoutData.type
+      });
+
+      // Add exercises to the workout
+      const exercisesWithOrderIndex = workoutData.exercises.map((exercise, index) => ({
+        ...exercise,
+        workout_id: newWorkout.id,
+        order_index: index,
+        muscle_groups: exercise.muscleGroups || [],
+        reps_or_time: exercise.reps ? 'reps' : 'time',
+        reps_value: exercise.reps || 0,
+        time_value: exercise.time || 0,
+        sets: exercise.sets,
+        set_results: exercise.setResults || Array(exercise.sets).fill().map(() => ({
+          weight: exercise.weight || 0,
+          reps: exercise.reps || 0,
+          time: exercise.time || 0,
+          completed: false
+        }))
+      }));
+
+      // Create all exercises
+      const createdExercises = await Promise.all(
+        exercisesWithOrderIndex.map(exercise => workoutService.createExercise(exercise))
+      );
+
+      // Add to local state
+      const completeWorkout = {
+        ...newWorkout,
+        type: workoutData.type,
+        exercises: createdExercises.map(exercise => ({
+          id: exercise.id,
+          exerciseId: exercise.id,
+          name: exercise.name,
+          muscleGroups: exercise.muscle_groups,
+          sets: exercise.sets,
+          repsOrTime: exercise.reps_or_time,
+          repsValue: exercise.reps_value,
+          timeValue: exercise.time_value,
+          weight: exercise.weight || 0,
+          rest: exercise.rest || 60,
+          setResults: exercise.set_results,
+          orderIndex: exercise.order_index
+        }))
+      };
+
+      setWorkouts(prev => [completeWorkout, ...prev]);
+      setShowWorkoutWizard(false);
+      setCurrentTab('workouts');
+    } catch (error) {
+      console.error('Error creating workout:', error);
+      alert('Failed to create workout. Please try again.');
+    }
+  };
+
+  const handleStartWorkout = (workout) => {
+    // Initialize set results if they don't exist
+    const workoutWithResults = {
+      ...workout,
+      exercises: workout.exercises.map(exercise => ({
+        ...exercise,
+        setResults: exercise.setResults || Array(exercise.sets).fill().map(() => ({
+          weight: exercise.weight || 0,
+          reps: exercise.repsValue || 0,
+          time: exercise.timeValue || 0,
+          completed: false
+        }))
+      }))
+    };
+    setExecutingWorkout(workoutWithResults);
+  };
+
+  const handleWorkoutComplete = async (completedWorkout) => {
+    try {
+      // Save completed workout data to the backend
+      // This would include updating set results, completion time, etc.
+      console.log('Workout completed:', completedWorkout);
+      
+      // Update local state
+      setWorkouts(prev => prev.map(w => 
+        w.id === completedWorkout.id ? completedWorkout : w
+      ));
+      
+      setExecutingWorkout(null);
+      setCurrentTab('dashboard');
+    } catch (error) {
+      console.error('Error saving completed workout:', error);
+    }
+  };
+
+  const handleSaveRoutine = async (routine) => {
+    try {
+      await workoutService.saveRoutine(routine);
+      setRoutineData(routine);
+      console.log('Routine saved successfully');
+    } catch (error) {
+      console.error('Error saving routine:', error);
+      throw error;
+    }
+  };
+
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -248,19 +359,45 @@ const SimpleWorkoutPlanner = () => {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No workouts yet</h3>
             <p className="text-gray-600 mb-4">Create your first workout to get started!</p>
-            <SimpleButton>Create First Workout</SimpleButton>
+            <SimpleButton onClick={() => setShowWorkoutWizard(true)}>
+              Create First Workout
+            </SimpleButton>
           </SimpleCard>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {workouts.slice(0, 4).map((workout) => (
-              <WorkoutCard
-                key={workout.id}
-                title={workout.name}
-                exerciseCount={workout.exercises?.length || 0}
-                workoutType={workout.type}
-                duration={30}
-                difficulty="Custom"
-              />
+              <SimpleCard key={workout.id} className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                        <div className="w-5 h-5 bg-current opacity-80 rounded"></div>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">{workout.name}</h3>
+                        <p className="text-sm text-gray-500 capitalize">{workout.type}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <span>{workout.exercises?.length || 0} exercises</span>
+                      <span>~30 min</span>
+                      <span className="px-2 py-1 bg-gray-100 rounded-full text-xs">Custom</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <SimpleButton 
+                    onClick={() => handleStartWorkout(workout)}
+                    className="flex-1"
+                  >
+                    <Play className="w-4 h-4 mr-2" />
+                    Start Workout
+                  </SimpleButton>
+                  <SimpleButton variant="ghost" size="sm">
+                    View Details
+                  </SimpleButton>
+                </div>
+              </SimpleCard>
             ))}
           </div>
         )}
@@ -272,7 +409,7 @@ const SimpleWorkoutPlanner = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">My Workouts</h2>
-        <SimpleButton>
+        <SimpleButton onClick={() => setShowWorkoutWizard(true)}>
           <Plus className="w-4 h-4 mr-2" />
           New Workout
         </SimpleButton>
@@ -312,20 +449,46 @@ const SimpleWorkoutPlanner = () => {
             }
           </p>
           {!searchQuery && (
-            <SimpleButton>Create First Workout</SimpleButton>
+            <SimpleButton onClick={() => setShowWorkoutWizard(true)}>
+              Create First Workout
+            </SimpleButton>
           )}
         </SimpleCard>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {filteredWorkouts.map((workout) => (
-            <WorkoutCard
-              key={workout.id}
-              title={workout.name}
-              exerciseCount={workout.exercises?.length || 0}
-              workoutType={workout.type}
-              duration={30}
-              difficulty="Custom"
-            />
+            <SimpleCard key={workout.id} className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                      <div className="w-5 h-5 bg-current opacity-80 rounded"></div>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">{workout.name}</h3>
+                      <p className="text-sm text-gray-500 capitalize">{workout.type}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <span>{workout.exercises?.length || 0} exercises</span>
+                    <span>~30 min</span>
+                    <span className="px-2 py-1 bg-gray-100 rounded-full text-xs">Custom</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <SimpleButton 
+                  onClick={() => handleStartWorkout(workout)}
+                  className="flex-1"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Start Workout
+                </SimpleButton>
+                <SimpleButton variant="ghost" size="sm">
+                  Edit
+                </SimpleButton>
+              </div>
+            </SimpleCard>
           ))}
         </div>
       )}
@@ -335,6 +498,7 @@ const SimpleWorkoutPlanner = () => {
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { id: 'workouts', label: 'Workouts', icon: Plus },
+    { id: 'routines', label: 'Routines', icon: Target },
     { id: 'calendar', label: 'Schedule', icon: Calendar },
     { id: 'analytics', label: 'Progress', icon: BarChart3 }
   ];
@@ -438,16 +602,25 @@ const SimpleWorkoutPlanner = () => {
           <main className="flex-1 min-w-0">
             {currentTab === 'dashboard' && renderDashboard()}
             {currentTab === 'workouts' && renderWorkouts()}
+            {currentTab === 'routines' && (
+              <RoutinePlanner
+                workouts={workouts}
+                onSaveRoutine={handleSaveRoutine}
+                currentRoutine={routineData}
+              />
+            )}
             {currentTab === 'calendar' && (
               <div className="text-center py-12">
+                <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Calendar View</h2>
-                <p className="text-gray-600">Coming soon - Schedule your workouts!</p>
+                <p className="text-gray-600">Coming soon - Schedule your workouts on a calendar!</p>
               </div>
             )}
             {currentTab === 'analytics' && (
               <div className="text-center py-12">
+                <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Progress Analytics</h2>
-                <p className="text-gray-600">Coming soon - Track your progress!</p>
+                <p className="text-gray-600">Coming soon - Track your progress with detailed analytics!</p>
               </div>
             )}
           </main>
@@ -481,15 +654,33 @@ const SimpleWorkoutPlanner = () => {
 
       {/* Floating Action Button - hide on mobile bottom nav */}
       <FloatingActionButton
+        onClick={() => setShowWorkoutWizard(true)}
         icon={<Plus className="w-6 h-6" />}
         className="hidden sm:flex"
       />
 
       {/* Mobile FAB - positioned above bottom nav */}
       <FloatingActionButton
+        onClick={() => setShowWorkoutWizard(true)}
         icon={<Plus className="w-5 h-5" />}
         className="sm:hidden bottom-20 right-4 w-12 h-12 p-3"
       />
+
+      {/* Modals and Overlays */}
+      {showWorkoutWizard && (
+        <FullWorkoutWizard
+          onComplete={handleWorkoutWizardComplete}
+          onCancel={() => setShowWorkoutWizard(false)}
+        />
+      )}
+
+      {executingWorkout && (
+        <WorkoutExecution
+          workout={executingWorkout}
+          onComplete={handleWorkoutComplete}
+          onExit={() => setExecutingWorkout(null)}
+        />
+      )}
 
       {/* Safe area for mobile devices */}
       <div className="h-20 lg:hidden"></div>
