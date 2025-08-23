@@ -1,0 +1,338 @@
+/* Modern Workout Planner Global Styles with OKLCH Colors */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* OKLCH Custom Properties with fallbacks */
+:root {
+  /* Primary colors - fallback to hex, upgrade to OKLCH when supported */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-900: #1e3a8a;
+
+  /* Workout type colors - fallbacks */
+  --color-strength: #3b82f6;
+  --color-strength-light: #dbeafe;
+  --color-cardio: #ef4444;
+  --color-cardio-light: #fee2e2;
+  --color-flexibility: #10b981;
+  --color-flexibility-light: #d1fae5;
+  --color-rest: #f59e0b;
+  --color-rest-light: #fef3c7;
+  --color-mixed: #8b5cf6;
+  --color-mixed-light: #ede9fe;
+
+  /* Neutral colors - fallbacks */
+  --color-white: #ffffff;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+}
+
+/* OKLCH upgrades when supported */
+@supports (color: oklch(0 0 0)) {
+  :root {
+    /* Primary colors with OKLCH */
+    --color-primary-50: oklch(0.971 0.013 264);
+    --color-primary-100: oklch(0.929 0.029 264);
+    --color-primary-500: oklch(0.639 0.174 264);
+    --color-primary-600: oklch(0.589 0.174 264);
+    --color-primary-700: oklch(0.539 0.154 264);
+    --color-primary-900: oklch(0.339 0.114 264);
+
+    /* Workout type colors with consistent lightness/chroma */
+    --color-strength: oklch(0.639 0.174 264);
+    --color-strength-light: oklch(0.929 0.029 264);
+    --color-cardio: oklch(0.639 0.174 15);
+    --color-cardio-light: oklch(0.929 0.029 15);
+    --color-flexibility: oklch(0.639 0.174 160);
+    --color-flexibility-light: oklch(0.929 0.029 160);
+    --color-rest: oklch(0.639 0.174 85);
+    --color-rest-light: oklch(0.929 0.029 85);
+    --color-mixed: oklch(0.639 0.174 305);
+    --color-mixed-light: oklch(0.929 0.029 305);
+
+    /* Neutral colors with OKLCH */
+    --color-white: oklch(1 0 0);
+    --color-gray-50: oklch(0.985 0 0);
+    --color-gray-100: oklch(0.97 0 0);
+    --color-gray-200: oklch(0.93 0 0);
+    --color-gray-300: oklch(0.86 0 0);
+    --color-gray-400: oklch(0.71 0 0);
+    --color-gray-500: oklch(0.56 0 0);
+    --color-gray-600: oklch(0.45 0 0);
+    --color-gray-700: oklch(0.34 0 0);
+    --color-gray-800: oklch(0.23 0 0);
+    --color-gray-900: oklch(0.15 0 0);
+  }
+}
+
+/* Base styles */
+body {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--color-gray-50);
+  color: var(--color-gray-900);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 0.9;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Animation utilities */
+.animate-slide-in-up {
+  animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Glass morphism utilities */
+.glass-light {
+  background-color: oklch(1 0 0 / 0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid oklch(1 0 0 / 0.2);
+}
+
+.glass-dark {
+  background-color: oklch(0 0 0 / 0.1);
+  backdrop-filter: blur(12px);
+  border: 1px solid oklch(1 0 0 / 0.1);
+}
+
+/* Workout type color utilities */
+.workout-strength {
+  background-color: var(--color-strength);
+  color: white;
+}
+
+.workout-strength-light {
+  background-color: var(--color-strength-light);
+  color: var(--color-strength);
+}
+
+.workout-cardio {
+  background-color: var(--color-cardio);
+  color: white;
+}
+
+.workout-cardio-light {
+  background-color: var(--color-cardio-light);
+  color: var(--color-cardio);
+}
+
+.workout-flexibility {
+  background-color: var(--color-flexibility);
+  color: white;
+}
+
+.workout-flexibility-light {
+  background-color: var(--color-flexibility-light);
+  color: var(--color-flexibility);
+}
+
+.workout-rest {
+  background-color: var(--color-rest);
+  color: white;
+}
+
+.workout-rest-light {
+  background-color: var(--color-rest-light);
+  color: var(--color-rest);
+}
+
+.workout-mixed {
+  background-color: var(--color-mixed);
+  color: white;
+}
+
+.workout-mixed-light {
+  background-color: var(--color-mixed-light);
+  color: var(--color-mixed);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Loading skeleton */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-gray-200),
+    var(--color-gray-100),
+    var(--color-gray-200)
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--color-gray-100);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-gray-300);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-400);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .glass-light,
+  .glass-dark {
+    backdrop-filter: none;
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print,
+  .fixed,
+  .sticky {
+    display: none !important;
+  }
+  
+  .print-break-inside-avoid {
+    break-inside: avoid;
+  }
+}
+
+/* Mobile enhancements */
+@media (max-width: 768px) {
+  /* Larger tap targets */
+  button, 
+  [role="button"], 
+  input[type="submit"], 
+  input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent zoom on input focus */
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
+/* Dark mode support (future enhancement) */
+@media (prefers-color-scheme: dark) {
+  /* Dark mode styles will go here in the future */
+}
