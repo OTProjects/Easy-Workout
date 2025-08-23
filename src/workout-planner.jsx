@@ -11,17 +11,36 @@ const WorkoutApp = () => {
 
   // Check authentication status on component mount
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+    // Handle OAuth callback
+    const handleOAuthCallback = async () => {
+      const { data, error } = await supabase.auth.getSession()
+      if (error) {
+        console.error('Error getting session:', error)
+        setLoading(false)
+        return
+      }
+      setUser(data?.session?.user ?? null)
       setLoading(false)
-    })
+      
+      // Clean up the URL hash after successful OAuth
+      if (window.location.hash) {
+        window.history.replaceState({}, document.title, window.location.pathname)
+      }
+    }
+
+    // Get initial session
+    handleOAuthCallback()
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setUser(session?.user ?? null)
         setLoading(false)
+        
+        // Clean up URL hash on auth state change
+        if (window.location.hash) {
+          window.history.replaceState({}, document.title, window.location.pathname)
+        }
       }
     )
 
