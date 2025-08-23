@@ -60,7 +60,11 @@ const Auth = ({ onAuthSuccess }) => {
       
       if (error) throw error
     } catch (error) {
-      setMessage(error.message)
+      if (error.message.includes('provider is not enabled')) {
+        setMessage(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login is not configured yet. Please check the setup guide.`)
+      } else {
+        setMessage(error.message)
+      }
       setLoading(false)
     }
   }
