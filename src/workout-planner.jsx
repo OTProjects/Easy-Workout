@@ -11,40 +11,62 @@ const WorkoutApp = () => {
 
   // Check authentication status on component mount
   useEffect(() => {
-    // Handle OAuth callback
-    const handleOAuthCallback = async () => {
-      const { data, error } = await supabase.auth.getSession()
-      if (error) {
-        console.error('Error getting session:', error)
-        setLoading(false)
-        return
-      }
-      setUser(data?.session?.user ?? null)
-      setLoading(false)
-      
-      // Clean up the URL hash after successful OAuth
-      if (window.location.hash) {
-        window.history.replaceState({}, document.title, window.location.pathname)
+    let mounted = true
+
+    const initAuth = async () => {
+      try {
+        console.log('Initializing auth, current URL:', window.location.href)
+        
+        // Get initial session
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Session error:', error)
+        } else {
+          console.log('Session data:', session)
+        }
+        
+        if (mounted) {
+          setUser(session?.user ?? null)
+          setLoading(false)
+          
+          // Clean up URL hash
+          if (window.location.hash && session?.user) {
+            console.log('Cleaning up URL hash')
+            window.history.replaceState({}, document.title, window.location.pathname)
+          }
+        }
+      } catch (err) {
+        console.error('Auth initialization error:', err)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
 
-    // Get initial session
-    handleOAuthCallback()
+    initAuth()
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user ?? null)
-        setLoading(false)
+        console.log('Auth state change:', event, session?.user?.email)
         
-        // Clean up URL hash on auth state change
-        if (window.location.hash) {
-          window.history.replaceState({}, document.title, window.location.pathname)
+        if (mounted) {
+          setUser(session?.user ?? null)
+          setLoading(false)
+          
+          // Clean up URL hash on successful auth
+          if (window.location.hash && session?.user) {
+            window.history.replaceState({}, document.title, window.location.pathname)
+          }
         }
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   // Load user data when authenticated
