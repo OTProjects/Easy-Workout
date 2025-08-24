@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Edit2, Trash2, Copy, RotateCcw, Target, Clock, TrendingUp, Save } from 'lucide-react';
+import { Calendar, Plus, Edit2, Trash2, Copy, RotateCcw, Target, Clock, TrendingUp, Save, Coffee } from 'lucide-react';
 import SimpleCard, { WorkoutCard } from './ui/SimpleCard';
 import SimpleButton from './ui/SimpleButton';
 import SimpleInput, { SearchInput } from './ui/SimpleInput';
@@ -18,6 +18,8 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [draggedItem, setDraggedItem] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // Pre-defined routine templates
   const ROUTINE_TEMPLATES = [
@@ -51,8 +53,8 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
     }
   ];
 
-  const filteredWorkouts = workouts.filter(workout =>
-    workout.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredWorkouts = (workouts || []).filter(workout =>
+    workout?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const addWorkoutToRoutine = (workout) => {
@@ -139,12 +141,32 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
   };
 
   const handleSaveRoutine = async () => {
+    if (!routineData.name.trim()) {
+      setError('Please enter a routine name');
+      return;
+    }
+    
+    if (routineData.orderedRoutineItems.length === 0) {
+      setError('Please add at least one workout or rest day to your routine');
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    
     try {
-      await onSaveRoutine(routineData);
-      // Show success message
+      await onSaveRoutine({
+        ...routineData,
+        id: currentRoutine.id || Date.now(),
+        createdAt: currentRoutine.createdAt || new Date(),
+        updatedAt: new Date()
+      });
+      // Success feedback could be added here
     } catch (error) {
       console.error('Error saving routine:', error);
-      // Show error message
+      setError('Failed to save routine. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -200,7 +222,7 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">Available Workouts</h3>
-            <SimpleButton size="sm">
+            <SimpleButton size="sm" variant="ghost">
               <Plus className="w-4 h-4 mr-2" />
               New Workout
             </SimpleButton>
@@ -214,10 +236,14 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
           />
 
           <div className="space-y-3 max-h-96 overflow-y-auto">
-            {filteredWorkouts.map((workout) => (
+            {filteredWorkouts.length > 0 ? filteredWorkouts.map((workout) => (
               <div 
                 key={workout.id}
-                className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 cursor-pointer"
+                className={`p-4 bg-white border rounded-lg hover:shadow-md transition-all duration-200 cursor-pointer ${
+                  routineData.selectedWorkoutIds.includes(workout.id) 
+                    ? 'border-green-200 bg-green-50' 
+                    : 'border-gray-200'
+                }`}
                 onClick={() => addWorkoutToRoutine(workout)}
               >
                 <div className="flex items-center justify-between">
@@ -229,21 +255,26 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
                   </div>
                   <SimpleButton 
                     size="sm" 
-                    variant="ghost"
+                    variant={routineData.selectedWorkoutIds.includes(workout.id) ? "default" : "ghost"}
                     disabled={routineData.selectedWorkoutIds.includes(workout.id)}
+                    className={routineData.selectedWorkoutIds.includes(workout.id) ? 'bg-green-100 text-green-700 cursor-default' : ''}
                   >
-                    {routineData.selectedWorkoutIds.includes(workout.id) ? 'Added' : 'Add'}
+                    {routineData.selectedWorkoutIds.includes(workout.id) ? 'Added ✓' : 'Add'}
                   </SimpleButton>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="p-8 text-center text-gray-500">
+                <p>No workouts found. Create a workout first!</p>
+              </div>
+            )}
 
             <div 
               className="p-4 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors duration-200 cursor-pointer text-center"
               onClick={addRestDay}
             >
               <div className="flex flex-col items-center gap-2">
-                <Coffee className="w-6 h-6 text-gray-400" />
+                <Plus className="w-6 h-6 text-gray-400" />
                 <span className="text-sm font-medium text-gray-600">Add Rest Day</span>
               </div>
             </div>
@@ -255,16 +286,40 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">Routine Schedule</h3>
             <div className="flex gap-2">
-              <SimpleButton variant="ghost" size="sm">
+              <SimpleButton 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  setRoutineData({
+                    name: 'My Workout Routine',
+                    description: '',
+                    selectedWorkoutIds: [],
+                    orderedRoutineItems: [],
+                    rotationCycles: 4,
+                    restDays: []
+                  });
+                  setError(null);
+                }}
+              >
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Reset
               </SimpleButton>
-              <SimpleButton onClick={handleSaveRoutine}>
+              <SimpleButton 
+                onClick={handleSaveRoutine}
+                disabled={loading}
+                className={loading ? 'opacity-50 cursor-not-allowed' : ''}
+              >
                 <Save className="w-4 h-4 mr-2" />
-                Save Routine
+                {loading ? 'Saving...' : 'Save Routine'}
               </SimpleButton>
             </div>
           </div>
+          
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
 
           {routineData.orderedRoutineItems.length === 0 ? (
             <SimpleCard className="p-8 text-center">
@@ -277,23 +332,57 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
           ) : (
             <div className="space-y-3">
               {routineData.orderedRoutineItems.map((item, index) => (
-                <SimpleCard key={item.id} className="p-4">
+                <SimpleCard 
+                  key={item.id} 
+                  className={`p-4 transition-all duration-200 ${
+                    item.isRestDay ? 'border-orange-200 bg-orange-50' : 'border-gray-200'
+                  }`}
+                  draggable
+                  onDragStart={(e) => {
+                    setDraggedItem({ item, index });
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedItem && draggedItem.index !== index) {
+                      reorderRoutineItems(draggedItem.index, index);
+                    }
+                    setDraggedItem(null);
+                  }}
+                  onDragEnd={() => setDraggedItem(null)}
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 rounded-full text-sm font-semibold">
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${
+                        item.isRestDay 
+                          ? 'bg-orange-100 text-orange-600' 
+                          : 'bg-blue-100 text-blue-600'
+                      }`}>
                         {index + 1}
                       </div>
                       <div>
                         <h4 className="font-medium text-gray-900">{item.workoutName}</h4>
-                        <p className="text-sm text-gray-500 capitalize">{item.workoutType}</p>
+                        <p className="text-sm text-gray-500 capitalize">
+                          {item.isRestDay ? 'Rest Day' : item.workoutType}
+                        </p>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-2">
+                      <div className="cursor-grab text-gray-400 hover:text-gray-600" title="Drag to reorder">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M9 5h2v2H9zm0 8h2v2H9zm0-4h2v2H9zm6-4h2v2h-2zm0 4h2v2h-2zm0 4h2v2h-2z"/>
+                        </svg>
+                      </div>
                       <SimpleButton 
                         variant="ghost" 
                         size="sm"
                         onClick={() => duplicateRoutineItem(index)}
+                        title="Duplicate item"
                       >
                         <Copy className="w-4 h-4" />
                       </SimpleButton>
@@ -302,6 +391,7 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
                         size="sm"
                         onClick={() => removeRoutineItem(index)}
                         className="text-red-600 hover:bg-red-50"
+                        title="Remove item"
                       >
                         <Trash2 className="w-4 h-4" />
                       </SimpleButton>
@@ -399,7 +489,24 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
             <SimpleButton 
               fullWidth 
               onClick={() => {
-                // Apply template logic here
+                // Apply template to routine data
+                const templateItems = template.pattern.map((day, index) => ({
+                  id: Date.now() + index,
+                  workoutId: day === 'Rest' ? null : `template-${index}`,
+                  workoutName: day,
+                  workoutType: day === 'Rest' ? 'rest' : day.toLowerCase().replace(/[^a-z0-9]/g, ''),
+                  dayOfWeek: null,
+                  isRestDay: day === 'Rest'
+                }));
+                
+                setRoutineData(prev => ({
+                  ...prev,
+                  name: template.name,
+                  description: template.description,
+                  orderedRoutineItems: templateItems,
+                  selectedWorkoutIds: templateItems.filter(item => !item.isRestDay).map(item => item.workoutId)
+                }));
+                
                 setActiveView('builder');
               }}
             >

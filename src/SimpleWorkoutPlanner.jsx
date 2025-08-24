@@ -18,7 +18,14 @@ const SimpleWorkoutPlanner = () => {
   // App state
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [workouts, setWorkouts] = useState([]);
-  const [routineData, setRoutineData] = useState({});
+  const [routineData, setRoutineData] = useState({
+    name: 'My Workout Routine',
+    description: '',
+    selectedWorkoutIds: [],
+    orderedRoutineItems: [],
+    rotationCycles: 4,
+    restDays: []
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showWorkoutWizard, setShowWorkoutWizard] = useState(false);
@@ -120,14 +127,29 @@ const SimpleWorkoutPlanner = () => {
     try {
       const routine = await workoutService.getRoutine();
       if (routine) {
+        setRoutineData(routine);
+      } else {
+        // Set default routine if none exists
         setRoutineData({
-          selectedWorkoutIds: routine.selected_workout_ids || [],
-          orderedRoutineItems: routine.ordered_routine_items || [],
-          rotationCycles: routine.rotation_cycles || 4
+          name: 'My Workout Routine',
+          description: '',
+          selectedWorkoutIds: [],
+          orderedRoutineItems: [],
+          rotationCycles: 4,
+          restDays: []
         });
       }
     } catch (error) {
       console.error('Error loading routine:', error);
+      // Set default routine on error
+      setRoutineData({
+        name: 'My Workout Routine',
+        description: '',
+        selectedWorkoutIds: [],
+        orderedRoutineItems: [],
+        rotationCycles: 4,
+        restDays: []
+      });
     }
   };
 

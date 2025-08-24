@@ -155,7 +155,22 @@ export const workoutService = {
       throw error
     }
     
-    return data
+    // Transform database fields to component-expected format
+    if (data) {
+      return {
+        id: data.id,
+        name: data.name || 'My Workout Routine',
+        description: data.description || '',
+        selectedWorkoutIds: data.selected_workout_ids || [],
+        orderedRoutineItems: data.ordered_routine_items || [],
+        rotationCycles: data.rotation_cycles || 4,
+        restDays: data.rest_days || [],
+        createdAt: data.created_at,
+        updatedAt: data.updated_at
+      }
+    }
+    
+    return null
   },
 
   async saveRoutine(routine) {
@@ -172,9 +187,13 @@ export const workoutService = {
       const { data, error } = await supabase
         .from('workout_routines')
         .update({
-          selected_workout_ids: routine.selectedWorkoutIds,
-          ordered_routine_items: routine.orderedRoutineItems,
-          rotation_cycles: routine.rotationCycles
+          name: routine.name || 'My Workout Routine',
+          description: routine.description || '',
+          selected_workout_ids: routine.selectedWorkoutIds || [],
+          ordered_routine_items: routine.orderedRoutineItems || [],
+          rotation_cycles: routine.rotationCycles || 4,
+          rest_days: routine.restDays || [],
+          updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id)
         .select()
@@ -192,10 +211,15 @@ export const workoutService = {
         .from('workout_routines')
         .insert([
           {
-            selected_workout_ids: routine.selectedWorkoutIds,
-            ordered_routine_items: routine.orderedRoutineItems,
-            rotation_cycles: routine.rotationCycles,
-            user_id: user.id
+            name: routine.name || 'My Workout Routine',
+            description: routine.description || '',
+            selected_workout_ids: routine.selectedWorkoutIds || [],
+            ordered_routine_items: routine.orderedRoutineItems || [],
+            rotation_cycles: routine.rotationCycles || 4,
+            rest_days: routine.restDays || [],
+            user_id: user.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           }
         ])
         .select()
