@@ -57,8 +57,12 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
     workout?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const addWorkoutToRoutine = (workout) => {
-    if (!routineData.selectedWorkoutIds.includes(workout.id)) {
+  const toggleWorkoutInRoutine = (workout) => {
+    if (routineData.selectedWorkoutIds.includes(workout.id)) {
+      // Remove workout from routine
+      removeWorkoutFromRoutine(workout.id);
+    } else {
+      // Add workout to routine  
       setRoutineData(prev => ({
         ...prev,
         selectedWorkoutIds: [...prev.selectedWorkoutIds, workout.id],
@@ -66,7 +70,7 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
           id: Date.now(),
           workoutId: workout.id,
           workoutName: workout.name,
-          workoutType: workout.type,
+          workoutType: workout.type || 'mixed',
           dayOfWeek: null,
           isRestDay: false
         }]
@@ -119,9 +123,13 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
   };
 
   const removeRoutineItem = (index) => {
+    const itemToRemove = routineData.orderedRoutineItems[index];
     setRoutineData(prev => ({
       ...prev,
-      orderedRoutineItems: prev.orderedRoutineItems.filter((_, i) => i !== index)
+      orderedRoutineItems: prev.orderedRoutineItems.filter((_, i) => i !== index),
+      selectedWorkoutIds: itemToRemove?.workoutId 
+        ? prev.selectedWorkoutIds.filter(id => id !== itemToRemove.workoutId)
+        : prev.selectedWorkoutIds
     }));
   };
 
@@ -221,7 +229,10 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
         {/* Available Workouts */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Available Workouts</h3>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Available Workouts</h3>
+              <p className="text-sm text-gray-600">Click to add/remove from routine</p>
+            </div>
             <SimpleButton size="sm" variant="ghost">
               <Plus className="w-4 h-4 mr-2" />
               New Workout
@@ -244,7 +255,7 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
                     ? 'border-green-200 bg-green-50' 
                     : 'border-gray-200'
                 }`}
-                onClick={() => addWorkoutToRoutine(workout)}
+                onClick={() => toggleWorkoutInRoutine(workout)}
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -256,10 +267,13 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
                   <SimpleButton 
                     size="sm" 
                     variant={routineData.selectedWorkoutIds.includes(workout.id) ? "default" : "ghost"}
-                    disabled={routineData.selectedWorkoutIds.includes(workout.id)}
-                    className={routineData.selectedWorkoutIds.includes(workout.id) ? 'bg-green-100 text-green-700 cursor-default' : ''}
+                    className={routineData.selectedWorkoutIds.includes(workout.id) ? 'bg-green-100 text-green-700 hover:bg-green-200' : ''}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleWorkoutInRoutine(workout);
+                    }}
                   >
-                    {routineData.selectedWorkoutIds.includes(workout.id) ? 'Added ✓' : 'Add'}
+                    {routineData.selectedWorkoutIds.includes(workout.id) ? 'Remove' : 'Add'}
                   </SimpleButton>
                 </div>
               </div>
@@ -284,7 +298,10 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
         {/* Routine Builder */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Routine Schedule</h3>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Routine Schedule</h3>
+              <p className="text-sm text-gray-600">Drag to reorder • Click actions to modify</p>
+            </div>
             <div className="flex gap-2">
               <SimpleButton 
                 variant="ghost" 
