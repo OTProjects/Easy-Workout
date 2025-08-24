@@ -193,6 +193,13 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
       return;
     }
     
+    // Check for placeholders that need to be replaced with real workouts
+    const hasPlaceholders = routineData.orderedRoutineItems.some(item => item.isPlaceholder);
+    if (hasPlaceholders) {
+      setError('Please replace template placeholders with actual workouts before saving');
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     
@@ -449,14 +456,20 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
                       <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${
                         item.isRestDay 
                           ? 'bg-orange-100 text-orange-600' 
+                          : item.isPlaceholder
+                          ? 'bg-yellow-100 text-yellow-600'
                           : 'bg-blue-100 text-blue-600'
                       }`}>
                         {index + 1}
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900">{item.workoutName}</h4>
+                        <h4 className={`font-medium ${
+                          item.isPlaceholder ? 'text-yellow-700 italic' : 'text-gray-900'
+                        }`}>
+                          {item.workoutName}
+                        </h4>
                         <p className="text-sm text-gray-500 capitalize">
-                          {item.isRestDay ? 'Rest Day' : item.workoutType}
+                          {item.isRestDay ? 'Rest Day' : item.isPlaceholder ? 'Needs workout' : item.workoutType}
                         </p>
                       </div>
                     </div>
@@ -484,6 +497,21 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
                       >
                         <Trash2 className="w-4 h-4" />
                       </SimpleButton>
+                      {item.isPlaceholder && (
+                        <SimpleButton 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            // For placeholders, show instruction to add workout from left panel
+                            setError('Add a workout from the Available Workouts list to replace this placeholder');
+                            setTimeout(() => setError(null), 3000);
+                          }}
+                          className="text-blue-600 hover:bg-blue-50"
+                          title="Replace with actual workout"
+                        >
+                          ➕ Add Workout
+                        </SimpleButton>
+                      )}
                     </div>
                   </div>
                 </SimpleCard>
@@ -578,22 +606,37 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
             <SimpleButton 
               fullWidth 
               onClick={() => {
-                // Apply template to routine data
-                const templateItems = template.pattern.map((day, index) => ({
-                  id: Date.now() + index,
-                  workoutId: day === 'Rest' ? null : `template-${index}`,
-                  workoutName: day,
-                  workoutType: day === 'Rest' ? 'rest' : day.toLowerCase().replace(/[^a-z0-9]/g, ''),
-                  dayOfWeek: null,
-                  isRestDay: day === 'Rest'
-                }));
+                // Apply template as guide - create rest days and placeholders for workouts
+                const templateItems = template.pattern.map((day, index) => {
+                  if (day === 'Rest') {
+                    return {
+                      id: Date.now() + index,
+                      workoutId: null,
+                      workoutName: 'Rest Day',
+                      workoutType: 'rest',
+                      dayOfWeek: null,
+                      isRestDay: true
+                    };
+                  } else {
+                    // Create placeholder that user needs to fill with actual workouts
+                    return {
+                      id: Date.now() + index,
+                      workoutId: null, // No fake ID - user must add real workouts
+                      workoutName: `${day} (select workout)`,
+                      workoutType: 'placeholder',
+                      dayOfWeek: null,
+                      isRestDay: false,
+                      isPlaceholder: true
+                    };
+                  }
+                });
                 
                 setRoutineData(prev => ({
                   ...prev,
                   name: template.name,
-                  description: template.description,
+                  description: `${template.description} - Add your workouts to each day`,
                   orderedRoutineItems: templateItems,
-                  selectedWorkoutIds: templateItems.filter(item => !item.isRestDay).map(item => item.workoutId)
+                  selectedWorkoutIds: [] // No fake IDs in selected workouts
                 }));
                 
                 setActiveView('builder');
