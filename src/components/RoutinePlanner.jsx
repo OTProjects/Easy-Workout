@@ -17,8 +17,8 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
     selectedWorkoutIds: [],
     orderedRoutineItems: [],
     rotationCycles: 4,
-    restDays: [],
-    ...currentRoutine
+    restDays: []
+    // Removed ...currentRoutine to always start fresh
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [draggedItem, setDraggedItem] = useState(null);
@@ -155,6 +155,31 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
     }, {});
 
     return { totalDays, workoutDays, restDays, workoutTypes };
+  };
+
+  const loadSavedRoutine = async () => {
+    try {
+      setLoading(true);
+      const routine = await workoutService.getRoutine();
+      if (routine) {
+        console.log('Loading saved routine:', routine);
+        setRoutineData({
+          name: routine.name || 'My Workout Routine',
+          description: routine.description || '',
+          selectedWorkoutIds: routine.selectedWorkoutIds || [],
+          orderedRoutineItems: routine.orderedRoutineItems || [],
+          rotationCycles: routine.rotationCycles || 4,
+          restDays: routine.restDays || []
+        });
+      } else {
+        setError('No saved routine found');
+      }
+    } catch (error) {
+      console.error('Error loading saved routine:', error);
+      setError('Failed to load saved routine');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSaveRoutine = async () => {
@@ -312,6 +337,14 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
               <p className="text-sm text-gray-600">Drag to reorder • Click actions to modify</p>
             </div>
             <div className="flex gap-2">
+              <SimpleButton 
+                variant="ghost" 
+                size="sm"
+                onClick={loadSavedRoutine}
+                disabled={loading}
+              >
+                📁 Load Saved
+              </SimpleButton>
               <SimpleButton 
                 variant="ghost" 
                 size="sm"

@@ -87,7 +87,7 @@ const SimpleWorkoutPlanner = () => {
   useEffect(() => {
     if (user) {
       loadWorkouts();
-      loadRoutine();
+      // Removed loadRoutine() - let users start fresh each time
     }
   }, [user]);
 
@@ -632,7 +632,7 @@ const SimpleWorkoutPlanner = () => {
               <RoutinePlanner
                 workouts={workouts}
                 onSaveRoutine={handleSaveRoutine}
-                currentRoutine={routineData}
+                currentRoutine={{}}
               />
             )}
             {currentTab === 'calendar' && (
