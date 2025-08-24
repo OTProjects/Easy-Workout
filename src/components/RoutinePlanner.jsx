@@ -7,6 +7,10 @@ import { workoutService } from '../services/workoutService';
 
 const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) => {
   const [activeView, setActiveView] = useState('builder'); // 'builder', 'calendar', 'templates'
+  
+  // Debug: log what currentRoutine contains
+  console.log('RoutinePlanner received currentRoutine:', currentRoutine);
+  
   const [routineData, setRoutineData] = useState({
     name: 'My Workout Routine',
     description: '',
@@ -58,10 +62,15 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
   );
 
   const toggleWorkoutInRoutine = (workout) => {
+    console.log('Toggling workout:', workout.name, 'ID:', workout.id);
+    console.log('Current selected IDs:', routineData.selectedWorkoutIds);
+    
     if (routineData.selectedWorkoutIds.includes(workout.id)) {
+      console.log('Removing workout from routine');
       // Remove workout from routine
       removeWorkoutFromRoutine(workout.id);
     } else {
+      console.log('Adding workout to routine');
       // Add workout to routine  
       setRoutineData(prev => ({
         ...prev,
@@ -307,6 +316,7 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
                 variant="ghost" 
                 size="sm"
                 onClick={() => {
+                  console.log('Resetting routine data');
                   setRoutineData({
                     name: 'My Workout Routine',
                     description: '',
@@ -320,6 +330,35 @@ const RoutinePlanner = ({ workouts = [], onSaveRoutine, currentRoutine = {} }) =
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Reset
+              </SimpleButton>
+              <SimpleButton 
+                variant="ghost" 
+                size="sm"
+                onClick={async () => {
+                  console.log('Clearing all routine data from UI and database');
+                  try {
+                    // Clear from database
+                    await workoutService.clearRoutine();
+                    
+                    // Clear from UI
+                    setRoutineData({
+                      name: 'My Workout Routine',
+                      description: '',
+                      selectedWorkoutIds: [],
+                      orderedRoutineItems: [],
+                      rotationCycles: 4,
+                      restDays: []
+                    });
+                    setError(null);
+                    console.log('Successfully cleared all routine data');
+                  } catch (error) {
+                    console.error('Error clearing routine:', error);
+                    setError('Failed to clear routine');
+                  }
+                }}
+                className="text-red-600 hover:bg-red-50"
+              >
+                Clear All
               </SimpleButton>
               <SimpleButton 
                 onClick={handleSaveRoutine}

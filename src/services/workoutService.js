@@ -232,5 +232,27 @@ export const workoutService = {
       
       return data
     }
+  },
+
+  async clearRoutine() {
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      throw new Error('User not authenticated')
+    }
+
+    // Delete any existing routine
+    const { error } = await supabase
+      .from('workout_routines')
+      .delete()
+      .eq('user_id', user.id)
+    
+    if (error && error.code !== 'PGRST116') { // Ignore "not found" errors
+      console.error('Error clearing routine:', error)
+      throw error
+    }
+    
+    console.log('Routine cleared from database')
+    return true
   }
 }

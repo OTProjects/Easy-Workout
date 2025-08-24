@@ -126,9 +126,13 @@ const SimpleWorkoutPlanner = () => {
   const loadRoutine = async () => {
     try {
       const routine = await workoutService.getRoutine();
+      console.log('Loaded routine from database:', routine);
+      
       if (routine) {
+        console.log('Setting routine data:', routine);
         setRoutineData(routine);
       } else {
+        console.log('No routine found, setting defaults');
         // Set default routine if none exists
         setRoutineData({
           name: 'My Workout Routine',
